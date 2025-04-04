@@ -1,0 +1,22 @@
+﻿@using Labb2_Frontend.Services
+@using Microsoft.AspNetCore.Components.Authorization
+@using MudBlazor
+@inject AuthenticationStateProvider AuthenticationStateProvider
+@inject ICustomerService CustomerService
+@inject NavigationManager Navigation
+@inject IDialogService DialogService
+@inject ICartService CartService
+
+
+    <MudGrid Justify="Justify.Center" Class="mt-4">
+        <MudItem xs="12" md="8" lg="6">
+            <MudPaper Elevation="3" Class="p-4 d-flex justify-center" Style="background-color: #324ab0">
+                <MudStack Row="true" Spacing="2" Justify="Justify.Center">
+                    <MudButton Href="/admin/manageCustomers" Color="Color.Secondary">Manage Customers</MudButton>
+                    <MudButton Href="/admin/manageProducts" Color="Color.Secondary">Manage Products</MudButton>
+                    <MudButton Href="/admin/manageOrders" Color="Color.Secondary">Manage Orders</MudButton>
+                </MudStack>
+            </MudPaper>
+        </MudItem>
+    </MudGrid>
+

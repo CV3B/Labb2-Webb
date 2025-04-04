@@ -1,0 +1,51 @@
+@page "/login"
+@using Labb2_Frontend.Services
+@using Labb2_Shared.DTO
+@using MudBlazor
+@inject IAuthService AuthService
+@inject NavigationManager Navigation
+@inject ISnackbar Snackbar
+
+<PageTitle>Login</PageTitle>
+
+<MudContainer MaxWidth="MaxWidth.Small" Class="mt-4">
+    <MudPaper Elevation="3" Class="p-4" Style="background-color: #324ab0">
+        <MudText Typo="Typo.h5" Color="Color.Secondary">Login</MudText>
+
+        <MudForm Class="mt-5">
+            <MudTextField Label="Email" @bind-Value="LoginCustomer.Email" Required="true" Style="background-color: white" Variant="Variant.Filled"/>
+            <MudTextField Label="Password" @bind-Value="LoginCustomer.Password" Required="true" InputType="InputType.Password" Class="mt-3" Style="background-color: white" Variant="Variant.Filled"/>
+            <MudButton OnClick="HandleLogin" Color="Color.Secondary" Class="mt-4">Login</MudButton>
+        </MudForm>
+
+        <MudButton OnClick="HandleLogout" Color="Color.Error" Variant="Variant.Filled" Class="mt-6">Logout</MudButton>
+        <MudText Typo="Typo.body2" Align="Align.Center" Class="mt-4">
+            <MudLink Href="/register" Color="Color.Secondary">Dont have an account? Register here</MudLink>
+        </MudText>
+    </MudPaper>
+</MudContainer>
+
+@code {
+    private LoginDTO LoginCustomer { get; set; } = new();
+
+    private async Task HandleLogin()
+    {
+        var response = await AuthService.LoginCustomer(LoginCustomer);
+        if (response)
+        {
+            Navigation.NavigateTo("/", forceLoad: true);
+            Snackbar.Add("Logged in", Severity.Success);
+        }
+        else
+        {
+            Snackbar.Add("Wrong Email or Password", Severity.Error);
+        }
+    }
+
+    private async Task HandleLogout()
+    {
+        await AuthService.Logout();
+        Navigation.NavigateTo("/", forceLoad: true);
+    }
+
+}

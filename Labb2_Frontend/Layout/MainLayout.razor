@@ -1,0 +1,45 @@
+﻿@using MudBlazor
+@inherits LayoutComponentBase
+<div class="page">
+    <div >
+        <NavMenu/>
+    </div>
+    <MudThemeProvider Theme="CustomTheme"/>
+    <MudPopoverProvider/>
+    <MudDialogProvider/>
+    <MudSnackbarProvider/>
+    <main>
+        <MudLayout>
+            <MudMainContent MaxWidth="MaxWidth.Medium">
+                @Body
+            </MudMainContent>
+        </MudLayout>
+    </main>
+</div>
+
+@code{
+
+    MudTheme CustomTheme = new MudTheme()
+    {
+        PaletteLight = new PaletteLight()
+        {
+            Primary = "#324ab0",
+            Secondary = "#f3c250",
+            AppbarBackground = "#324ab0",
+            Background = "#1f2e6e",
+            Info = Colors.Gray.Lighten5,
+            
+        },
+        PaletteDark = new PaletteDark()
+        {
+            Primary = Colors.Blue.Lighten1
+        },
+
+        LayoutProperties = new LayoutProperties()
+        {
+            DrawerWidthLeft = "260px",
+            DrawerWidthRight = "300px"
+        }
+    };
+
+}

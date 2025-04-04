@@ -1,0 +1,65 @@
+@page "/admin/manageCustomers"
+@using System.Collections.ObjectModel
+@using Labb2_Frontend.Services
+@using Labb2_Shared.Model
+@using Microsoft.AspNetCore.Authorization
+@using Microsoft.IdentityModel.Tokens
+@using MudBlazor
+@attribute [Authorize(Roles = "Admin")]
+@inject ICustomerService CustomerService
+
+<PageTitle>Manage Customers</PageTitle>
+
+<AdminNavMenu/>
+<MudContainer MaxWidth="MaxWidth.Large" Class="mt-4">
+    <MudPaper Elevation="3" Class="p-4" Style="background-color: #324ab0">
+        <MudStack Row="true" AlignItems=AlignItems.Center Justify="Justify.SpaceBetween">
+            <MudText Typo="Typo.h5" Color="Color.Secondary">Manage Customers</MudText>
+        </MudStack>
+        @if (Customers.IsNullOrEmpty())
+        {
+            <MudStack AlignItems=AlignItems.Center>
+                <MudProgressCircular Color="Color.Inherit" Indeterminate="true" Size="Size.Large" Rounded="true"/>
+            </MudStack>
+        }
+        else
+        {
+            <MudTextField @bind-Value="_searchString" Placeholder="Search orders..." Adornment="Adornment.Start"
+                          AdornmentIcon="@Icons.Material.Filled.Search" IconSize="Size.Medium" Class="my-3" Style="color: white" Immediate="true" AdornmentColor="Color.Info"/>
+
+            <MudDataGrid Items="@Customers" QuickFilter="@QuickFilter" ReadOnly="false" Hover="true" Class="mt-2">
+                <Columns>
+                    <PropertyColumn Property="c => c.Id" Title="Id"/>
+                    <PropertyColumn Property="c => c.FullName" Title="Name"/>
+                    <PropertyColumn Property="c => c.Email" Title="Email"/>
+                    <PropertyColumn Property="c => c.Phone" Title="Phone Number"/>
+                    <PropertyColumn Property="c => c.Address" Title="Address"/>
+                    <PropertyColumn Property="c => c.Role" Title="Role"/>
+                </Columns>
+            </MudDataGrid>
+        }
+    </MudPaper>
+</MudContainer>
+
+@code {
+
+    ObservableCollection<Customer>? Customers { get; set; } = new ObservableCollection<Customer>();
+    private string? _searchString;
+
+    private Func<Customer, bool> QuickFilter => c =>
+    {
+        if (string.IsNullOrWhiteSpace(_searchString))
+            return true;
+
+        if (c.Email.ToString().Contains(_searchString, StringComparison.OrdinalIgnoreCase))
+            return true;
+
+        return false;
+    };
+
+    protected override async Task OnInitializedAsync()
+    {
+        Customers = new ObservableCollection<Customer>(await CustomerService.GetCustomers());
+    }
+
+}

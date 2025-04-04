@@ -1,0 +1,72 @@
+﻿@using Labb2_Frontend.Pages
+@using Labb2_Frontend.Services
+@using Labb2_Shared.Model
+@using Microsoft.AspNetCore.Components.Authorization
+@using MudBlazor
+@inject AuthenticationStateProvider AuthenticationStateProvider
+@inject ICustomerService CustomerService
+@inject NavigationManager Navigation
+@inject IDialogService DialogService
+@inject ICartService CartService
+
+
+<MudAppBar Elevation="4" Color="Color.Primary">
+    <MudGrid Justify="Justify.SpaceBetween" Class="w-100">
+        <MudItem xs="3" md="4" Class="d-flex justify-center align-items-center">
+            <MudText Typo="Typo.h6">F1 Merch</MudText>
+        </MudItem>
+
+        <MudItem xs="6" md="4" Class="d-flex justify-center">
+            <MudButton Color="Color.Inherit" Href="/">Home</MudButton>
+        </MudItem>
+
+        <MudItem xs="3" md="4" Class="d-flex justify-end">
+            <MudButton Href="@CustomerProfileOrLogin" StartIcon="@Icons.Material.Filled.AccountCircle" Color="Color.Inherit" Variant="Variant.Text">
+                @CustomerName
+            </MudButton>
+            <MudIconButton OnClick="OpenCartDialog" Icon="@Icons.Material.Filled.ShoppingCart" Color="Color.Inherit"/>
+            @if (IsReady && AuthState.User.IsInRole("Admin"))
+            {
+                <MudIconButton Href="/admin/manageProducts" Icon="@Icons.Material.Filled.AdminPanelSettings" Color="Color.Inherit"/>
+            }
+        </MudItem>
+    </MudGrid>
+</MudAppBar>
+
+@code {
+
+    private AuthenticationState AuthState { get; set; }
+    private string? CustomerName { get; set; }
+    private string? CustomerProfileOrLogin { get; set; }
+    private Customer Customer { get; set; }
+
+    private bool IsReady { get; set; } = false;
+
+
+    protected override async Task OnInitializedAsync()
+    {
+        AuthState = await AuthenticationStateProvider.GetAuthenticationStateAsync();
+        var user = AuthState.User;
+
+        if (user.Identity?.IsAuthenticated == true && !string.IsNullOrEmpty(user.Identity.Name))
+        {
+            var customer = await CustomerService.GetCustomerByEmail(user.Identity.Name);
+            CustomerName = customer.FirstName;
+            CustomerProfileOrLogin = "/profile";
+        }
+        else
+        {
+            CustomerName = "";
+            CustomerProfileOrLogin = "/login";
+        }
+
+        IsReady = true;
+    }
+
+    private async void OpenCartDialog()
+    {
+        await DialogService.ShowAsync<CartDialog>("Cart");
+    }
+
+}
+

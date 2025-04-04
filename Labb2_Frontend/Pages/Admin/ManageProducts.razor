@@ -1,0 +1,111 @@
+@page "/admin/manageProducts"
+@using System.Collections.ObjectModel
+@using Labb2_Frontend.Services
+@using Labb2_Shared.Model
+@using Microsoft.AspNetCore.Authorization
+@using Microsoft.IdentityModel.Tokens
+@using MudBlazor
+@inject IProductService ProductService
+@inject IDialogService DialogService
+@attribute [Authorize(Roles = "Admin")]
+
+<PageTitle>Manage Products</PageTitle>
+
+<AdminNavMenu/>
+<MudContainer MaxWidth="MaxWidth.Large" Class="mt-4">
+    <MudPaper Elevation="3" Class="p-4" Style="background-color: #324ab0">
+        <MudStack Row="true" AlignItems=AlignItems.Center Justify="Justify.SpaceBetween">
+            <MudText Typo="Typo.h5" Color="Color.Secondary">Manage Products</MudText>
+            <MudButton Variant="Variant.Filled" Color="Color.Primary" OnClick="@StartAddingProduct">
+                <MudIcon Icon="@Icons.Material.Filled.Add" Class="mr-2" Color="Color.Secondary"/> Add Product
+            </MudButton>
+        </MudStack>
+
+        @if (Products.IsNullOrEmpty())
+        {
+            <MudStack AlignItems=AlignItems.Center>
+                <MudProgressCircular Color="Color.Default" Indeterminate="true" Size="Size.Large" Rounded="true"/>
+            </MudStack>
+        }
+        else
+        {
+            <MudTextField @bind-Value="SearchString" Placeholder="Search products..." Adornment="Adornment.Start"
+                          AdornmentIcon="@Icons.Material.Filled.Search" IconSize="Size.Medium" Class="my-3" Style="color: white" Immediate="true" AdornmentColor="Color.Info"/>
+
+            <MudDataGrid Items="@Products" QuickFilter="@QuickFilter" ReadOnly="false" Hover="true" Class="mt-2">
+                <Columns>
+                    <PropertyColumn Property="p => p.Id" Title="ID"/>
+                    <PropertyColumn Property="p => p.Name" Title="Name"/>
+                    <PropertyColumn Property="p => p.Description" Title="Description"/>
+                    <PropertyColumn Property="p => p.Price" Title="Price" Format="C"/>
+                    <PropertyColumn Property="p => p.Category.Name" Title="Category"/>
+                    <PropertyColumn Property="p => p.Status" Title="Status"/>
+                    <TemplateColumn CellClass="d-flex justify-end" Context="product">
+                        <CellTemplate>
+                            <MudIconButton Color="Color.Primary" Icon="@Icons.Material.Outlined.Edit"
+                                           OnClick="@(() => StartEditingProduct(product.Item))"/>
+                        </CellTemplate>
+                    </TemplateColumn>
+                </Columns>
+            </MudDataGrid>
+        }
+    </MudPaper>
+</MudContainer>
+
+@code {
+    ObservableCollection<Product>? Products { get; set; } = new ObservableCollection<Product>();
+    private string? SearchString { get; set; }
+
+    private Func<Product, bool> QuickFilter => p =>
+    {
+        if (string.IsNullOrWhiteSpace(SearchString))
+            return true;
+
+        if (p.Id.ToString().Contains(SearchString, StringComparison.OrdinalIgnoreCase))
+            return true;
+
+        if (p.Name.Contains(SearchString, StringComparison.OrdinalIgnoreCase))
+            return true;
+
+        return false;
+    };
+
+    protected override async Task OnInitializedAsync()
+    {
+        Products = new ObservableCollection<Product>(await ProductService.GetProducts());
+    }
+
+    private async Task StartEditingProduct(Product product)
+    {
+        var parameters = new DialogParameters
+        {
+            { nameof(Product), product },
+            { "IsAddingProduct", false }
+        };
+        var dialog = await DialogService.ShowAsync<ManageProductDialog>("Edit Product", parameters);
+        var result = await dialog.Result;
+
+        if (!result.Canceled)
+        {
+            Products = new ObservableCollection<Product>(await ProductService.GetProducts());
+        }
+    }
+
+    private async Task StartAddingProduct()
+    {
+        var parameters = new DialogParameters
+        {
+            { nameof(Product), new Product() { Id = Guid.NewGuid() } },
+            { "IsAddingProduct", true }
+        };
+
+        var dialog = await DialogService.ShowAsync<ManageProductDialog>("Add Product", parameters);
+        var result = await dialog.Result;
+
+        if (!result.Canceled)
+        {
+            Products = new ObservableCollection<Product>(await ProductService.GetProducts());
+        }
+    }
+
+}

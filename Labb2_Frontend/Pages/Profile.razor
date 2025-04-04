@@ -1,0 +1,101 @@
+@page "/profile"
+@using Labb2_Frontend.Services
+@using Labb2_Shared.Model
+@using Microsoft.AspNetCore.Authorization
+@using Microsoft.AspNetCore.Components.Authorization
+@using MudBlazor
+@inject NavigationManager Navigation
+@inject ISnackbar Snackbar
+@inject IOrderService OrderService 
+@inject ICustomerService CustomerService
+@inject AuthenticationStateProvider AuthenticationStateProvider
+@inject IAuthService AuthService
+@attribute [Authorize]
+
+<PageTitle>Profile</PageTitle>
+
+<MudContainer MaxWidth="MaxWidth.Large" Class="mt-4">
+    <MudPaper Elevation="3" Class="p-4" Style="background-color: #324ab0">
+        <MudStack Row="true" AlignItems=AlignItems.Center Justify="Justify.SpaceBetween">
+            <MudText Typo="Typo.h5" Color="Color.Secondary">Profile</MudText>
+        </MudStack>
+
+        @if (Customer.FirstName == null)
+        {
+            <MudStack AlignItems=AlignItems.Center>
+                <MudProgressCircular Color="Color.Default" Indeterminate="true" Size="Size.Large" Rounded="true"/>
+            </MudStack>
+        }
+        else
+        {
+            <MudCard>
+                <MudCardContent>
+                    <MudForm>
+                        <MudTextField Label="First Name" @bind-Value="Customer.FirstName" Required="true"/>
+                        <MudTextField Label="Last Name" @bind-Value="Customer.LastName" Required="true"/>
+                        <MudTextField Label="Email" @bind-Value="Customer.Email" Required="true"/>
+                        <MudTextField Label="Phone Number" @bind-Value="Customer.Phone"/>
+                        <MudTextField Label="Address" @bind-Value="Customer.Address"/>
+                        <MudButton OnClick="UpdateCustomer" Color="Color.Primary">Save Changes</MudButton>
+                    </MudForm>
+                </MudCardContent>
+            </MudCard>
+            <MudDataGrid Items="@Orders" ReadOnly="false" Hover="true" Class="mt-2">
+                <Columns>
+                    <TemplateColumn Title="Orders">
+                        <CellTemplate Context="order">
+                            <MudList Dense>
+                                <MudText Typo="Typo.caption">Id: @order.Item.Id</MudText>
+                                @foreach (var item in order.Item.OrderItems)
+                                {
+                                    <MudText Typo="Typo.body1">@item.Product.Name (Qty: @item.Quantity) - @item.TotalPrice.ToString("C")</MudText> @* *@
+                                }
+                            </MudList>
+                        </CellTemplate>
+                    </TemplateColumn>
+                </Columns>
+            </MudDataGrid>
+        }
+
+        <MudButton OnClick="HandleLogout" Color="Color.Error" Class="mt-6" Variant="Variant.Filled">Logout</MudButton>
+
+    </MudPaper>
+</MudContainer>
+
+@code {
+    private List<Order>? Orders { get; set; } = new List<Order>();
+    private Customer? Customer { get; set; } = new();
+    private string? CustomerEmail { get; set; }
+    private Guid CustomerId { get; set; }
+    private AuthenticationState AuthState { get; set; }
+
+    protected override async Task OnInitializedAsync()
+    {
+        AuthState = await AuthenticationStateProvider.GetAuthenticationStateAsync();
+        CustomerEmail = AuthState.User.Identity.Name ?? "Something went wrong";
+
+        Customer = await CustomerService.GetCustomerByEmail(CustomerEmail);
+        CustomerId = Customer.Id;
+        Orders = await OrderService.GetOrderById(CustomerId);
+    }
+
+    private async Task UpdateCustomer()
+    {
+        var response = await CustomerService.UpdateCustomer(Customer);
+        if (response)
+        {
+            Snackbar.Add("Changes saved", Severity.Success);
+        }
+        else
+        {
+            Snackbar.Add("Failed to save", Severity.Error);
+        }
+    }
+
+    private async Task HandleLogout()
+    {
+        await AuthService.Logout();
+        Navigation.NavigateTo("/", forceLoad: true);
+    }
+
+}

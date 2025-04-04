@@ -1,0 +1,130 @@
+@page "/checkout"
+@using Labb2_Frontend.Services
+@using Labb2_Shared.DTO
+@using Labb2_Shared.Model
+@using Microsoft.AspNetCore.Authorization
+@using Microsoft.AspNetCore.Components.Authorization
+@using MudBlazor
+@inject NavigationManager Navigation
+@inject ISnackbar Snackbar
+@inject ICartService CartService
+@inject IOrderService OrderService
+@inject ICustomerService CustomerService
+@inject AuthenticationStateProvider AuthenticationStateProvider
+@attribute [Authorize]
+
+<PageTitle>Checkout</PageTitle>
+
+<MudContainer MaxWidth="MaxWidth.Large" Class="mt-4">
+    <MudPaper Elevation="3" Class="p-4" Style="background-color: #324ab0">
+        <MudStack Row="true" AlignItems=AlignItems.Center Justify="Justify.SpaceBetween">
+            <MudText Typo="Typo.h5" Color="Color.Secondary">Checkout</MudText>
+        </MudStack>
+
+        @if (Customer.FirstName == null)
+        {
+            <MudStack AlignItems=AlignItems.Center>
+                <MudProgressCircular Color="Color.Default" Indeterminate="true" Size="Size.Large" Rounded="true"/>
+            </MudStack>
+        }
+        else
+        {
+            <MudCard>
+                <MudCardContent>
+                    <MudForm>
+                        <MudField Label="First Name">@Customer.FirstName</MudField>
+                        <MudField Label="Last Name">@Customer.LastName</MudField>
+                        <MudField Label="Email">@Customer.Email</MudField>
+                        <MudField Label="Phone Number">@Customer.Phone</MudField>
+                        <MudField Label="Address">@Customer.Address</MudField>
+                    </MudForm>
+                </MudCardContent>
+            </MudCard>
+
+            <MudCard Class="mt-3">
+                <MudCardContent>
+                    <MudText Typo="Typo.h6">Your Cart</MudText>
+                    @if (CartItems.Any())
+                    {
+                        @foreach (var item in CartItems)
+                        {
+                            <MudText>@item.Product.Name (Qty: @item.Quantity) - @((item.Product.Price * item.Quantity).ToString("C"))</MudText>
+                        }
+                    }
+                    else
+                    {
+                        <MudText>No items in your cart</MudText>
+                    }
+                </MudCardContent>
+            </MudCard>
+
+            <MudCard Class="mt-3">
+                <MudCardContent>
+                    <MudStack Row="true" Justify="Justify.SpaceBetween">
+                        <MudText Typo="Typo.h6">Total: @TotalPrice.ToString("C")</MudText>
+                        <MudButton OnClick="ProceedToPayment" Color="Color.Success" Variant="Variant.Filled" Disabled="@(CartService.GetItemsFromCart().Count == 0)">Proceed to Payment</MudButton>
+                    </MudStack>
+                </MudCardContent>
+            </MudCard>
+        }
+    </MudPaper>
+</MudContainer>
+
+@code {
+    private Customer? Customer { get; set; } = new();
+    private double TotalPrice => CartService.GetItemsFromCart().Sum(item => item.Product.Price * item.Quantity);
+    private AuthenticationState AuthState { get; set; }
+    private string? CustomerEmail { get; set; }
+    private List<CartItemDTO> CartItems { get; set; } = new();
+    private List<OrderItemDTO> CartOrderItems { get; set; } = new();
+
+    protected override async Task OnInitializedAsync()
+    {
+        AuthState = await AuthenticationStateProvider.GetAuthenticationStateAsync();
+        CustomerEmail = AuthState.User.Identity.Name ?? "Something went wrong";
+
+        Customer = await CustomerService.GetCustomerByEmail(CustomerEmail);
+        CartItems = CartService.GetItemsFromCart();
+    }
+
+    private async Task ProceedToPayment()
+    {
+        if (CartItems.Count > 0)
+        {
+            foreach (var item in CartItems)
+            {
+                var newOrderItem = new OrderItemDTO()
+                {
+                    ProductId = item.Product.Id,
+                    Quantity = item.Quantity
+                };
+
+                CartOrderItems.Add(newOrderItem);
+            }
+
+            var newOrder = new OrderRequestDTO()
+            {
+                CustomerId = Customer.Id,
+                OrderItems = CartOrderItems
+            };
+
+            var response = await OrderService.AddOrder(newOrder);
+
+            if (response)
+            {
+                Snackbar.Add("Order placed", Severity.Success);
+                CartService.EmptyCart();
+                Navigation.NavigateTo("/profile");
+            }
+            else
+            {
+                Snackbar.Add("Failed to place the order", Severity.Error);
+            }
+        }
+        else
+        {
+            Snackbar.Add("Your cart is empty.", Severity.Warning);
+        }
+    }
+
+}

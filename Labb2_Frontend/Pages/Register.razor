@@ -1,0 +1,48 @@
+@page "/register"
+@using Labb2_Frontend.Services
+@using Labb2_Shared.DTO
+@using MudBlazor
+@inject NavigationManager NavigationManager
+@inject IAuthService AuthService
+@inject ISnackbar Snackbar
+
+<PageTitle>Register</PageTitle>
+
+<MudContainer MaxWidth="MaxWidth.Small" Class="mt-4">
+    <MudPaper Elevation="3" Class="p-4" Style="background-color: #324ab0">
+        <MudText Typo="Typo.h5" Class="mb-4" Color="Color.Secondary">Register an Account</MudText>
+
+        <MudForm Model="@RegisteredCustomer" @bind-IsValid="@IsValid">
+            <MudTextField Label="Email" @bind-Value="RegisteredCustomer.Email" Required="true" Style="background-color: white; margin-bottom: 5px" Variant="Variant.Filled"/>
+            <MudTextField Label="First Name" @bind-Value="RegisteredCustomer.FirstName" Required="true" Style="background-color: white; margin-bottom: 5px" Variant="Variant.Filled"/>
+            <MudTextField Label="Last Name" @bind-Value="RegisteredCustomer.LastName" Required="true" Style="background-color: white; margin-bottom: 5px" Variant="Variant.Filled"/>
+            <MudTextField Label="Phone Number" @bind-Value="RegisteredCustomer.PhoneNumber" Required="true" Style="background-color: white; margin-bottom: 5px" Variant="Variant.Filled"/>
+            <MudTextField Label="Address" @bind-Value="RegisteredCustomer.Address" Required="true" Style="background-color: white; margin-bottom: 5px" Variant="Variant.Filled"/>
+            <MudTextField Label="Password" @bind-Value="RegisteredCustomer.Password" Required="true" InputType="InputType.Password" Class="mt-2" Style="background-color: white; margin-bottom: 5px" Variant="Variant.Filled"/>
+            <MudButton Disabled="@(!IsValid)" OnClick="HandleRegister" Color="Color.Secondary" Class="mt-2">Register</MudButton>
+        </MudForm>
+    </MudPaper>
+</MudContainer>
+
+@code {
+    private CustomerDTO RegisteredCustomer { get; set; } = new CustomerDTO();
+    private bool IsValid { get; set; }
+
+    private async Task HandleRegister()
+    {
+        var success = await AuthService.RegisterCustomer(RegisteredCustomer);
+
+        if (success)
+        {
+            Snackbar.Add("Created account", Severity.Success);
+            NavigationManager.NavigateTo("/login");
+        }
+        else
+        {
+            Snackbar.Add("Could not register account", Severity.Error);
+        }
+    }
+
+}
+
+}

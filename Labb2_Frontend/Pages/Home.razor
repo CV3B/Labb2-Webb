@@ -1,0 +1,91 @@
+﻿@page "/"
+@using System.Collections.ObjectModel
+@using Labb2_Frontend.Services
+@using Labb2_Shared.Model
+@using Microsoft.IdentityModel.Tokens
+@using MudBlazor
+@inject IProductService ProductService
+@inject ICartService CartService
+
+<PageTitle>Home</PageTitle>
+
+@if (Products.IsNullOrEmpty())
+{
+    <MudStack AlignItems=AlignItems.Center>
+        <MudProgressCircular Color="Color.Default" Indeterminate="true" Size="Size.Large" Rounded="true"/>
+    </MudStack>
+}
+else
+{
+    <MudContainer MaxWidth="MaxWidth.Large" Class="mt-4">
+        <MudPaper Elevation="3" Class="p-4" Style="background-color: #324ab0">
+            <MudStack Row="true" AlignItems=AlignItems.Center Justify="Justify.SpaceBetween">
+                <MudText Typo="Typo.h5" Color="Color.Secondary">Available Products</MudText>
+            </MudStack>
+            <MudStack Row="true" AlignItems="AlignItems.Center" Justify="Justify.SpaceBetween">
+                <MudTextField @bind-Value="SearchString" Placeholder="Search products..." Adornment="Adornment.Start"
+                              IconSize="Size.Medium" Class="my-3" Immediate="true" Style="color: white"/>
+                <MudIconButton Icon="@Icons.Material.Filled.Search" OnClick="SearchProducts" Color="Color.Info"/>
+
+            </MudStack>
+
+            <MudGrid>
+                @foreach (var product in Products)
+                {
+                    <MudItem xs="12" sm="6" md="4" lg="3">
+                        <MudCard Class="mb-4" Style="height: 460px">
+                            <MudCardMedia Image="@product.ImageLink" Height="250" Alt="@product.Name" Style="object-fit: contain"/>
+                            <MudCardContent>
+                                <MudText Typo="Typo.h6">@product.Name</MudText>
+                                <MudText Typo="Typo.subtitle2" Class="text-muted">@product.Category.Name</MudText>
+                                <MudText Typo="Typo.subtitle1" Class="text-muted">@product.Description</MudText>
+                                <MudText Typo="Typo.body1">@product.Price.ToString("C")</MudText>
+                            </MudCardContent>
+                            <MudCardActions>
+                                <MudButton Variant="Variant.Filled" Color="Color.Primary" OnClick="() => CartService.AddToCart(product)">
+                                    Add to Cart
+                                </MudButton>
+                            </MudCardActions>
+                        </MudCard>
+                    </MudItem>
+                }
+            </MudGrid>
+        </MudPaper>
+    </MudContainer>
+}
+
+
+@code {
+
+    private ObservableCollection<Product> Products { get; set; } = new();
+    private string? SearchString { get; set; }
+
+    protected override async Task OnInitializedAsync()
+    {
+        Products = new ObservableCollection<Product>(await ProductService.GetProducts());
+        StateHasChanged();
+    }
+
+
+    private async Task SearchProducts()
+    {
+        if (string.IsNullOrWhiteSpace(SearchString))
+        {
+            Products = new ObservableCollection<Product>(await ProductService.GetProducts());
+        }
+        else if (Guid.TryParse(SearchString, out var id))
+        {
+            var product = await ProductService.GetProductById(id);
+            Products = product != null ? new ObservableCollection<Product> { product } : new ObservableCollection<Product>();
+        }
+        else
+        {
+            var product = await ProductService.GetProductByName(SearchString);
+            Products = product != null ? new ObservableCollection<Product> { product } : new ObservableCollection<Product>();
+        }
+
+        StateHasChanged();
+    }
+
+
+}

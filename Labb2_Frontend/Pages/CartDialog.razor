@@ -1,0 +1,65 @@
+@using Labb2_Frontend.Services
+@using MudBlazor
+@inject ICartService CartService
+@inject NavigationManager Navigation
+
+<MudDialog Style="position: absolute; top: 0; right: 0; height: 100vh; width: 400px;">
+    <TitleContent>
+        <MudStack Row="true" AlignItems=AlignItems.Center>
+            <MudText Typo="Typo.h6">Shopping Cart</MudText>
+        </MudStack>
+    </TitleContent>
+
+    <DialogContent >
+        @if (CartService.GetItemsFromCart().Count > 0)
+        {
+            @foreach (var cartItem in CartService.GetItemsFromCart())
+            {
+                <MudGrid Spacing="3">
+                    <MudItem xs="3">
+                        <MudAvatar Size="Size.Large">
+                            <MudImage Src="@cartItem.Product.ImageLink"/>
+                        </MudAvatar>
+                    </MudItem>
+                    <MudItem xs="5">
+                        <MudText>@cartItem.Product.Name</MudText>
+                        <MudText Typo="Typo.subtitle2">Price: @cartItem.Product.Price.ToString("C")</MudText>
+                        <MudText Typo="Typo.subtitle2">Quantity: @cartItem.Quantity</MudText>
+                    </MudItem>
+                    <MudItem xs="2">
+                        <MudNumericField @bind-Value="cartItem.Quantity" Min="1" Variant="Variant.Text" Style="width: 100%;"/>
+                    </MudItem>
+                    <MudItem xs="2" Class="text-right">
+                        <MudIconButton Icon="@Icons.Material.Filled.Delete" OnClick="() => CartService.RemoveFromCart(cartItem)" Color="Color.Error" Style="width: 100%;"/>
+                    </MudItem>
+                </MudGrid>
+            }
+        }
+        else
+        {
+            <MudText Class="mt-4">Your cart is empty.</MudText>
+        }
+    </DialogContent>
+
+    <DialogActions >
+        <MudStack Row="true" Spacing="4" Justify="Justify.SpaceBetween">
+            <MudText Class="mt-4">Total Price: @CartService.GetItemsFromCart().Sum(item => item.Product.Price * item.Quantity).ToString("C")</MudText>
+            <MudButton Variant="Variant.Text" OnClick="CloseDialog">Close</MudButton>
+            <MudButton Color="Color.Primary" Variant="Variant.Filled" OnClick="Checkout" Disabled="CartService.GetItemsFromCart().Count <= 0">Checkout</MudButton>
+        </MudStack>
+    </DialogActions>
+</MudDialog>
+
+@code {
+    [CascadingParameter] private IMudDialogInstance MudDialog { get; set; }
+
+    private void CloseDialog() => MudDialog.Cancel();
+
+
+    private async Task Checkout()
+    {
+        Navigation.NavigateTo("/Checkout");
+    }
+
+
+}

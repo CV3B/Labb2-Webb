@@ -1,0 +1,76 @@
+@page "/admin/manageOrders"
+@using System.Collections.ObjectModel
+@using Labb2_Frontend.Services
+@using Labb2_Shared.Model
+@using Microsoft.AspNetCore.Authorization
+@using Microsoft.IdentityModel.Tokens
+@using MudBlazor
+@inject IOrderService OrderService
+@attribute [Authorize(Roles = "Admin")]
+
+<PageTitle>Manage Orders</PageTitle>
+
+<AdminNavMenu/>
+<MudContainer MaxWidth="MaxWidth.Large" Class="mt-4">
+    <MudPaper Elevation="3" Class="p-4" Style="background-color: #324ab0">
+        <MudStack Row="true" AlignItems=AlignItems.Center Justify="Justify.SpaceBetween">
+            <MudText Typo="Typo.h5" Color="Color.Secondary">Manage Orders</MudText>
+        </MudStack>
+
+        @if (Orders.IsNullOrEmpty())
+        {
+            <MudStack AlignItems=AlignItems.Center>
+                <MudProgressCircular Color="Color.Default" Indeterminate="true" Size="Size.Large" Rounded="true"/>
+            </MudStack>
+        }
+        else
+        {
+            <MudTextField @bind-Value="SearchString" Placeholder="Search orders..." Adornment="Adornment.Start"
+                          AdornmentIcon="@Icons.Material.Filled.Search" IconSize="Size.Medium" Class="my-3" Immediate="true" Style="color: white" AdornmentColor="Color.Info"/>
+
+            <MudDataGrid Items="@Orders" QuickFilter="@QuickFilter" ReadOnly="false" Hover="true" Class="mt-2">
+                <Columns>
+                    <PropertyColumn Property="o => o.Id" Title="Id"/>
+                    <PropertyColumn Property="o => o.Customer.FullName" Title="Name"/>
+                    <PropertyColumn Property="o => o.Customer.Email" Title="Email"/>
+                    <PropertyColumn Property="o => o.Customer.Phone" Title="Phone Number"/>
+                    <TemplateColumn Title="Items">
+                        <CellTemplate Context="order">
+                            <MudList Dense>
+                                @foreach (var item in order.Item.OrderItems)
+                                {
+                                    <MudText>@item.Product.Name (Qty: @item.Quantity) - @item.TotalPrice.ToString("C")</MudText> @* *@
+                                }
+                            </MudList>
+                        </CellTemplate>
+                    </TemplateColumn>
+
+                </Columns>
+            </MudDataGrid>
+        }
+    </MudPaper>
+</MudContainer>
+
+@code {
+
+    ObservableCollection<Order>? Orders { get; set; } = new ObservableCollection<Order>();
+    private string? SearchString { get; set; }
+
+    private Func<Order, bool> QuickFilter => o =>
+    {
+        if (string.IsNullOrWhiteSpace(SearchString))
+            return true;
+
+        if (o.Id.ToString().Contains(SearchString, StringComparison.OrdinalIgnoreCase))
+            return true;
+
+        return false;
+    };
+
+
+    protected override async Task OnInitializedAsync()
+    {
+        Orders = new ObservableCollection<Order>(await OrderService.GetOrders());
+    }
+
+}

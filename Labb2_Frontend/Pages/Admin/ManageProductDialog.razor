@@ -1,0 +1,115 @@
+@using Labb2_Frontend.Services
+@using Labb2_Shared.Model
+@using Microsoft.AspNetCore.Authorization
+@using MudBlazor
+@inject ISnackbar Snackbar
+@inject IProductService ProductService
+@inject ICategoryService CategoryService
+@attribute [Authorize(Roles = "Admin")]
+
+<MudDialog>
+    <TitleContent>
+        <MudStack AlignItems=AlignItems.Center>
+            <MudText Typo="Typo.h6">Manage Product</MudText>
+        </MudStack>
+    </TitleContent>
+    <DialogContent>
+        <MudGrid Spacing="3">
+            <MudItem xs="12">
+                <MudTextField Hidden="@IsAddingProduct" Value="@Product.Id.ToString()" Label="Id" ReadOnly="true" Variant="Variant.Outlined"/>
+            </MudItem>
+            <MudItem xs="12">
+                <MudTextField T="string" @bind-Value="Product.Name" Label="Name" Variant="Variant.Outlined"/>
+            </MudItem>
+            <MudItem xs="12">
+                <MudTextField T="string" @bind-Value="Product.Description" Label="Description" Variant="Variant.Outlined"/>
+            </MudItem>
+            <MudItem xs="12">
+                <MudTextField T="double" @bind-Value="Product.Price" Label="Price" Variant="Variant.Outlined"/>
+            </MudItem>
+            <MudItem xs="12">
+                <MudSelect T="Status" @bind-Value="Product.Status" Label="Status" Variant="Variant.Outlined">
+                    @foreach (Status status in Enum.GetValues(typeof(Status)))
+                    {
+                        <MudSelectItem T="Status" Value="@status">@status</MudSelectItem>
+                    }
+                </MudSelect>
+            </MudItem>
+            <MudItem xs="12">
+                <MudSelect T="Guid" @bind-Value="Product.CategoryId" Variant="Variant.Outlined" Label="Category" ToStringFunc="GetCategoryName">
+                    @foreach (var category in Categories)
+                    {
+                        <MudSelectItem Value="category.Id">@category.Name</MudSelectItem>
+                    }
+                </MudSelect>
+            </MudItem>
+            <MudItem xs="12">
+                <MudTextField T="string" @bind-Value="Product.ImageLink" Label="Image Link" Variant="Variant.Outlined"/>
+            </MudItem>
+        </MudGrid>
+    </DialogContent>
+    <DialogActions>
+        <MudStack Row="true" Spacing="2">
+            <MudButton Variant="Variant.Text" OnClick="Cancel">Cancel</MudButton>
+            @if (IsAddingProduct)
+            {
+                <MudButton Color="Color.Success" Variant="Variant.Filled" OnClick="AddProduct">Add Product</MudButton>
+            }
+            else
+            {
+                <MudButton Color="Color.Error" Variant="Variant.Filled" OnClick="DeleteProduct">Delete</MudButton>
+                <MudButton Color="Color.Primary" Variant="Variant.Filled" OnClick="UpdateProduct">Update</MudButton>
+            }
+        </MudStack>
+    </DialogActions>
+</MudDialog>
+
+
+@code {
+    [CascadingParameter] private IMudDialogInstance MudDialog { get; set; }
+
+    [Parameter] public Product Product { get; set; } = new Product() { Category = new Category() };
+
+    [Parameter] public bool IsAddingProduct { get; set; }
+
+    private List<Category>? Categories { get; set; } = new();
+
+    protected override async Task OnInitializedAsync()
+    {
+        var result = await CategoryService.GetCategories();
+        Categories = result?.ToList() ?? new List<Category>();
+    }
+
+    private void Cancel() => MudDialog.Cancel();
+
+    private async Task DeleteProduct()
+    {
+        await ProductService.DeleteProduct(Product.Id);
+
+        Snackbar.Add("Product Deleted", Severity.Success);
+        MudDialog.Close(DialogResult.Ok(Product.Id));
+    }
+
+    private async Task UpdateProduct()
+    {
+        await ProductService.UpdateProduct(Product);
+
+        Snackbar.Add("Product Edited", Severity.Success);
+        MudDialog.Close(DialogResult.Ok(Product.Id));
+    }
+
+    private async Task AddProduct()
+    {
+        await ProductService.AddProduct(Product);
+
+        Snackbar.Add("Product Added", Severity.Success);
+        MudDialog.Close(DialogResult.Ok(Product.Id));
+    }
+
+    private string GetCategoryName(Guid id)
+    {
+        var category = Categories.FirstOrDefault(c => c.Id == id);
+        return category != null ? category.Name : "Select a category";
+    }
+
+}
