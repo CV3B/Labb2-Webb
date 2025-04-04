@@ -2,6 +2,7 @@
 @using Labb2_Frontend.Services
 @using Labb2_Shared.Model
 @using Microsoft.AspNetCore.Components.Authorization
+@using Microsoft.IdentityModel.Tokens
 @using MudBlazor
 @inject AuthenticationStateProvider AuthenticationStateProvider
 @inject ICustomerService CustomerService
@@ -65,6 +66,8 @@
 
     private async void OpenCartDialog()
     {
+        if (CustomerName.IsNullOrEmpty()) Navigation.NavigateTo("/login");
+        
         await DialogService.ShowAsync<CartDialog>("Cart");
     }
 

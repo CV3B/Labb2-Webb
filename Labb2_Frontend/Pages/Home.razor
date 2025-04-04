@@ -34,10 +34,10 @@ else
                 {
                     <MudItem xs="12" sm="6" md="4" lg="3">
                         <MudCard Class="mb-4" Style="height: 460px">
-                            <MudCardMedia Image="@product.ImageLink" Height="250" Alt="@product.Name" Style="object-fit: contain"/>
+                            <MudCardMedia Image="@(string.IsNullOrEmpty(product.ImageLink) ? "" : product.ImageLink)" Height="250" Alt="@product.Name" Style="object-fit: contain"/>
                             <MudCardContent>
                                 <MudText Typo="Typo.h6">@product.Name</MudText>
-                                <MudText Typo="Typo.subtitle2" Class="text-muted">@product.Category.Name</MudText>
+                                <MudText Typo="Typo.subtitle2" Class="text-muted">@(product.Category?.Name ?? "No Category")</MudText>
                                 <MudText Typo="Typo.subtitle1" Class="text-muted">@product.Description</MudText>
                                 <MudText Typo="Typo.body1">@product.Price.ToString("C")</MudText>
                             </MudCardContent>
