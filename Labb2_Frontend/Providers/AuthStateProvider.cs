@@ -1,17 +1,17 @@
 using System.IdentityModel.Tokens.Jwt;
 using System.Net.Http.Headers;
 using System.Security.Claims;
-using Blazored.SessionStorage;
+using Blazored.LocalStorage;
 using Microsoft.AspNetCore.Components.Authorization;
 
 namespace Labb2_Frontend.Providers;
 
-public class AuthStateProvider(HttpClient httpClient, ISessionStorageService sessionStorage)
+public class AuthStateProvider(HttpClient httpClient, ILocalStorageService localStorage)
     : AuthenticationStateProvider
 {
     public override async Task<AuthenticationState> GetAuthenticationStateAsync()
     {
-        var token = await sessionStorage.GetItemAsync<string>("accessToken");
+        var token = await localStorage.GetItemAsync<string>("accessToken");
 
         var identity = string.IsNullOrEmpty(token)
             ? new ClaimsIdentity()
@@ -23,7 +23,7 @@ public class AuthStateProvider(HttpClient httpClient, ISessionStorageService ses
 
     public void NotifyCustomerAuthentication()
     {
-     NotifyAuthenticationStateChanged(GetAuthenticationStateAsync());
+        NotifyAuthenticationStateChanged(GetAuthenticationStateAsync());
     }
 
     private IEnumerable<Claim> ParseClaimsFromJwt(string token)
@@ -35,11 +35,12 @@ public class AuthStateProvider(HttpClient httpClient, ISessionStorageService ses
 
     public async Task AttachToken()
     {
-        var token = await sessionStorage.GetItemAsync<string>("accessToken");
+        var token = await localStorage.GetItemAsync<string>("accessToken");
 
         if (!string.IsNullOrEmpty(token))
         {
             httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
         }
+        
     }
 }

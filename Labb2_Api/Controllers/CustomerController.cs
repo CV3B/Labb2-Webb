@@ -24,7 +24,7 @@ public class CustomerController(IUnitOfWork unitOfWork) : ControllerBase
     /// Create a new customer
     /// </summary>
     /// <param name="customer">Customer data of the new customer</param>
-    [Authorize(Roles = "Admin")]
+    [Authorize]
     [HttpPost]
     public async void AddCustomer([FromBody] Customer customer)
     {
@@ -38,7 +38,7 @@ public class CustomerController(IUnitOfWork unitOfWork) : ControllerBase
     /// <param name="id">Id of the customer that is going to be updated</param>
     /// <param name="customer">Customer data that is going to be updated</param>
     /// <returns>Returns 200 when the customer is updated or 404 if the id does not exist as a custommr</returns>
-    [Authorize(Roles = "Admin")]
+    [Authorize]
     [HttpPut("{id}")]
     public async Task<IActionResult> UpdateCustomer(Guid id, [FromBody] Customer customer)
     {

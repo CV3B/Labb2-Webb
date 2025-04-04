@@ -1,5 +1,5 @@
 using System.Net.Http.Json;
-using Blazored.SessionStorage;
+using Blazored.LocalStorage;
 using Labb2_Frontend.Providers;
 using Labb2_Shared.DTO;
 
@@ -7,7 +7,7 @@ namespace Labb2_Frontend.Services;
 
 public class AuthService(
     HttpClient httpClient,
-    ISessionStorageService sessionStorage,
+    ILocalStorageService localStorage,
     AuthStateProvider authStateProvider)
     : IAuthService
 {
@@ -29,18 +29,19 @@ public class AuthService(
 
         if (tokenResponse == null) return false;
 
-        await sessionStorage.SetItemAsync("accessToken", tokenResponse.AccessToken);
-        await sessionStorage.SetItemAsync("refreshToken", tokenResponse.RefreshToken);
+        await localStorage.SetItemAsync("accessToken", tokenResponse.AccessToken);
+        await localStorage.SetItemAsync("refreshToken", tokenResponse.RefreshToken);
 
         await authStateProvider.AttachToken();
         authStateProvider.NotifyCustomerAuthentication();
+
         return true;
     }
 
     public async Task Logout()
     {
-        await sessionStorage.RemoveItemAsync("accessToken");
-        await sessionStorage.RemoveItemAsync("refreshToken");
+        await localStorage.RemoveItemAsync("accessToken");
+        await localStorage.RemoveItemAsync("refreshToken");
 
         httpClient.DefaultRequestHeaders.Authorization = null;
         authStateProvider.NotifyCustomerAuthentication();

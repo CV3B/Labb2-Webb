@@ -50,7 +50,7 @@ public class OrderController(IUnitOfWork unitOfWork) : ControllerBase
     /// </summary>
     /// <param name="orderDTO">Customer id and a list of order items</param>
     /// <returns>Returns 200 with the order or 404 Not Found if it failed</returns>
-    [Authorize(Roles = "Admin")]
+    [Authorize]
     [HttpPost]
     public async Task<IActionResult> AddOrder([FromBody] OrderRequestDTO orderDTO)
     {
